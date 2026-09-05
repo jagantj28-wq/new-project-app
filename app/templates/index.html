@@ -1,0 +1,400 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmTwin &mdash; Precision Agriculture Digital Twin & Micro-Climate Simulator</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-[#0b1315] text-slate-100 min-h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- Top Navigation Telemetry Bar -->
+    <header class="h-16 border-b border-slate-800/80 bg-[#0f191c]/90 backdrop-blur-md px-5 flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <span class="text-xl">🌱</span>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-base tracking-tight text-white">FARMTWIN</span>
+                        <span class="text-[10px] font-mono uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">FAO-56 V1.0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Micro-Climate & Digital Twin Simulator</p>
+                </div>
+            </div>
+
+            <!-- Farm Preset Dropdown -->
+            <div class="hidden md:flex items-center pl-4 border-l border-slate-800">
+                <label for="preset-select" class="text-xs text-slate-400 mr-2">Farm Estate:</label>
+                <select id="preset-select" class="bg-slate-900 border border-slate-700/80 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Telemetry Status Pills & Action Buttons -->
+        <div class="flex items-center space-x-3">
+            <div class="hidden lg:flex items-center space-x-2 text-xs bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-slate-400">Agro-Weather API:</span>
+                <span class="text-emerald-400 font-mono">Live 1km</span>
+            </div>
+
+            <div class="hidden xl:flex items-center space-x-2 text-xs bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg">
+                <span class="text-slate-400">Location:</span>
+                <span id="farm-location-badge" class="text-slate-200 font-medium truncate max-w-[160px]">Salinas Valley, CA</span>
+            </div>
+
+            <!-- AI Copilot Button -->
+            <button id="btn-open-advisor" class="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg shadow-emerald-600/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                <span>🤖</span>
+                <span>AI Agronomist</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace: Split View -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left / Center: Interactive Map & 14-Day Timeline -->
+        <div class="flex-1 flex flex-col min-w-0 border-r border-slate-800/80 relative">
+            
+            <!-- Zone Selection Header Bar -->
+            <div class="h-12 bg-slate-950/70 border-b border-slate-800/60 px-5 flex items-center justify-between z-10">
+                <div class="flex items-center space-x-3 overflow-x-auto py-1">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider text-[10px]">Crop Zones:</span>
+                    <div id="zone-pills-container" class="flex items-center space-x-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Simulation Loading Spinner -->
+                <div id="simulation-loading" class="hidden flex items-center space-x-2 text-xs text-emerald-400 font-mono">
+                    <span class="w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+                    <span>Computing FAO-56...</span>
+                </div>
+            </div>
+
+            <!-- Leaflet GIS Map Container -->
+            <div class="flex-1 relative">
+                <div id="farm-map"></div>
+
+                <!-- Map Legend / Overlay Info Badge -->
+                <div class="absolute top-4 left-4 z-[1000] glass-panel px-3.5 py-2.5 rounded-xl text-xs space-y-1.5 shadow-xl">
+                    <div class="font-bold text-slate-200 text-[11px] flex items-center space-x-1.5">
+                        <span>🛰️</span>
+                        <span>High-Res Satellite & NDVI Zone Layer</span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
+                            <span>Optimal</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
+                            <span>Mild Stress</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span>
+                            <span>Drought Deficit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 14-Day Micro-Climate Timeline & Scrubber -->
+            <div class="h-28 bg-[#0d1619] border-t border-slate-800/90 px-6 py-3 flex flex-col justify-between z-20 shrink-0">
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-slate-200 text-xs flex items-center space-x-1.5">
+                            <span>⏳</span>
+                            <span>14-Day Micro-Climate Forecast Scrubber</span>
+                        </span>
+                        <span id="active-timeline-date" class="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">
+                            Loading date...
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="text-[11px] text-slate-400 flex items-center space-x-3 font-mono">
+                            <span>Temp: <strong id="metric-temp" class="text-slate-200">--</strong></span>
+                            <span>VPD: <strong id="metric-vpd" class="text-slate-200">--</strong></span>
+                            <span>Rain: <strong id="metric-rain" class="text-blue-400">--</strong></span>
+                        </div>
+
+                        <!-- Play / Pause Forecast Button -->
+                        <button id="btn-play-sim" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3 py-1 rounded-lg text-xs font-medium transition-colors">
+                            <span>▶</span>
+                            <span>Play Forecast</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Range Slider Track -->
+                <div class="relative py-1">
+                    <input id="timeline-slider" type="range" min="0" max="13" value="0" step="1" 
+                           class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer appearance-none">
+                    
+                    <div class="flex justify-between text-[10px] font-mono text-slate-500 pt-1">
+                        <span>Day 0 (Today)</span>
+                        <span>Day +3</span>
+                        <span>Day +7</span>
+                        <span>Day +10</span>
+                        <span>Day +13</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Telemetry Dashboard & Prescriptions -->
+        <div class="w-full lg:w-[460px] xl:w-[500px] flex flex-col bg-[#0d1619] overflow-y-auto shrink-0 divide-y divide-slate-800/80">
+            
+            <!-- Zone Overview Header -->
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h2 id="zone-name-display" class="font-bold text-base text-white">Zone 1</h2>
+                        <div class="flex items-center space-x-2 text-xs text-slate-400 mt-0.5">
+                            <span id="zone-crop-display" class="font-semibold text-emerald-400">TOMATO</span>
+                            <span>&middot;</span>
+                            <span id="zone-soil-display">LOAM SOIL</span>
+                            <span>&middot;</span>
+                            <span id="zone-acres-display">25 ACRES</span>
+                        </div>
+                    </div>
+                    <span id="metric-status-badge" class="badge-optimal text-xs px-2.5 py-1 rounded-full font-semibold">
+                        OPTIMAL
+                    </span>
+                </div>
+
+                <!-- Hydrological Gauge Matrix -->
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    
+                    <!-- Soil Moisture Card -->
+                    <div class="glass-panel p-3.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Volumetric Moisture</span>
+                            <span class="font-mono text-emerald-400">θ (vol)</span>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="metric-moisture" class="text-2xl font-bold font-mono text-white">28.4%</span>
+                            <span class="text-[10px] text-slate-400 font-mono">FC: 28%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                            <div id="metric-moisture-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 70%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Root Zone Depletion Dr Card -->
+                    <div class="glass-panel p-3.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Root Zone Deficit (Dr)</span>
+                            <span class="font-mono text-amber-400">FAO-56</span>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="metric-dr" class="text-2xl font-bold font-mono text-white">12.5 mm</span>
+                        </div>
+                        <div id="metric-raw" class="text-[10px] text-slate-400 font-mono mt-2 truncate">
+                            RAW: 38.5 mm (TAW: 98 mm)
+                        </div>
+                    </div>
+
+                    <!-- Evapotranspiration ETc Card -->
+                    <div class="glass-panel p-3.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Crop Water Use (ETc)</span>
+                            <span class="text-emerald-400 text-xs">💧</span>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="metric-etc" class="text-2xl font-bold font-mono text-white">4.8 mm/d</span>
+                        </div>
+                        <div id="metric-et0" class="text-[10px] text-slate-400 font-mono mt-1 truncate">
+                            Ref ET0: 4.2 mm/d
+                        </div>
+                    </div>
+
+                    <!-- NDVI Health Score -->
+                    <div class="glass-panel p-3.5 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Simulated NDVI Health</span>
+                            <span class="text-xs">🌿</span>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="metric-ndvi" class="text-2xl font-bold font-mono text-emerald-400">0.82</span>
+                            <span class="text-[10px] text-slate-400 font-mono">/ 1.0</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-1">High Biomass Vigour</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry Graph Section -->
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">14-Day Moisture & Demand Dynamics</h3>
+                    <span class="text-[10px] font-mono text-slate-400">Chart.js Engine</span>
+                </div>
+                <div class="h-48 w-full bg-slate-900/40 rounded-xl p-2 border border-slate-800/80">
+                    <canvas id="telemetry-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Precision Irrigation Prescription Section -->
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">🚰</span>
+                        <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Precision Irrigation Prescription</h3>
+                    </div>
+                    <span id="presc-efficiency" class="text-[10px] font-mono uppercase bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded">
+                        90% Drip Delivery
+                    </span>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="flex justify-between items-baseline">
+                        <div>
+                            <div class="text-[11px] text-slate-400">Target Replenishment Volume</div>
+                            <div class="flex items-baseline space-x-2 mt-0.5">
+                                <span id="presc-water-liters" class="text-xl font-extrabold font-mono text-white">325,000 L</span>
+                                <span id="presc-water-gallons" class="text-xs font-mono text-slate-400">(85,855 gal)</span>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-[11px] text-slate-400">Pump Runtime</div>
+                            <div id="presc-runtime" class="text-sm font-bold font-mono text-emerald-400 mt-0.5">3.2 hrs</div>
+                        </div>
+                    </div>
+
+                    <!-- Energy Cost & Delivery Breakdown -->
+                    <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+                        <span class="text-slate-400">Estimated Pumping Energy Cost:</span>
+                        <span id="presc-cost" class="font-mono font-bold text-emerald-400">$3.36</span>
+                    </div>
+
+                    <!-- Pulse Schedule Breakdown -->
+                    <div class="pt-2">
+                        <div class="text-[10px] text-slate-400 uppercase font-semibold mb-1.5">Automated Multi-Pulse Schedule:</div>
+                        <div id="presc-schedule" class="space-y-1.5">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agronomic Alarms & Risk Assessment -->
+            <div class="p-5">
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="text-base">⚠️</span>
+                    <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Agronomic Alarms & Diagnostics</h3>
+                </div>
+
+                <div id="risks-container" class="space-y-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AI Agronomist Copilot Floating Drawer -->
+    <div id="advisor-drawer" class="fixed top-0 right-0 h-full w-full md:w-[440px] bg-[#0c1417]/95 backdrop-blur-xl border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+        
+        <!-- Drawer Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg">
+                    🌾
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-white">AI Agronomist Copilot</h3>
+                    <p class="text-[10px] text-slate-400 font-mono">Soil Hydrology & IPM Specialist</p>
+                </div>
+            </div>
+            <button id="btn-close-advisor" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                ✕
+            </button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="advisor-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div class="flex justify-start mb-3">
+                <div class="max-w-[88%] bg-slate-900/90 border border-slate-700/60 text-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 text-xs leading-relaxed shadow-lg">
+                    <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 mb-1 inline-block">AGRONOMIC ENGINE</span>
+                    <div>Hello! I am your <strong>FarmTwin Agronomist Copilot</strong>. I am continuously monitoring your farm's root-zone water balance, evapotranspiration, and micro-climate indicators. How can I assist your crop management today?</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Suggestion Chips -->
+        <div class="px-4 py-2 bg-slate-950/40 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+            <button onclick="sendQuickPrompt('When should I irrigate this zone and how much?')" class="text-[10px] bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-slate-300 px-2.5 py-1 rounded-full transition-colors">
+                💧 Next Irrigation Window?
+            </button>
+            <button onclick="sendQuickPrompt('What fertilizer and fertigation schedule is recommended?')" class="text-[10px] bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-slate-300 px-2.5 py-1 rounded-full transition-colors">
+                🌿 Fertigation Plan
+            </button>
+            <button onclick="sendQuickPrompt('Are there any fungal or pathogen risks under this forecast?')" class="text-[10px] bg-slate-900 hover:bg-slate-800 border border-slate-700/60 text-slate-300 px-2.5 py-1 rounded-full transition-colors">
+                🛡️ Disease & Blight Risk
+            </button>
+        </div>
+
+        <!-- Input Box -->
+        <div class="p-3 border-t border-slate-800 bg-slate-900/80">
+            <div class="flex items-center space-x-2">
+                <input id="advisor-input" type="text" placeholder="Ask your agronomist about soil, water, pests..." 
+                       class="flex-1 bg-slate-950 border border-slate-700/80 text-white text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500">
+                <button id="advisor-send" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Modules -->
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script src="/static/js/advisor.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+﻿/* FarmTwin Custom Styles & Glassmorphism */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: #0b1315;
+    color: #f1f5f9;
+}
+
+.font-mono {
+    font-family: var(--font-mono);
+}
+
+/* Glassmorphic Cards */
+.glass-panel {
+    background: rgba(15, 23, 27, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover:hover {
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.08);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 23, 27, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(52, 211, 153, 0.25);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 211, 153, 0.5);
+}
+
+/* Map Custom Styling */
+#farm-map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    background: #080d0e;
+}
+
+.leaflet-container {
+    background: #080d0e !important;
+}
+
+/* Custom Pulsing Polygon Marker */
+@keyframes pulse-stress {
+    0% { transform: scale(0.98); opacity: 0.8; }
+    50% { transform: scale(1.02); opacity: 1; filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.6)); }
+    100% { transform: scale(0.98); opacity: 0.8; }
+}
+
+.pulse-stress-zone {
+    animation: pulse-stress 2s infinite ease-in-out;
+}
+
+/* Range Input Slider Styling */
+input[type=range] {
+    accent-color: #10b981;
+}
+
+/* Badge Glows */
+.badge-optimal {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-mild {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-critical {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-waterlogged {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
