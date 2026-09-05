@@ -1,4 +1,4 @@
-﻿// FarmTwin Leaflet Map Controller
+// FarmTwin Leaflet Map Controller
 let farmMap = null;
 let zonePolygonLayers = {};
 let activeZoneId = null;

@@ -1,4 +1,4 @@
-﻿// FarmTwin Main Application Orchestrator
+// FarmTwin Main Application Orchestrator
 
 let appState = {
     presets: [],

@@ -1,4 +1,4 @@
-﻿// FarmTwin Chart.js Telemetry Controller
+// FarmTwin Chart.js Telemetry Controller
 let moistureChartInstance = null;
 
 function renderTelemetryChart(dailyResults, fcPct = 28.0, wpPct = 14.0) {

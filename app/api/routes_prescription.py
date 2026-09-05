@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 from app.models.schemas import PrescriptionRequest, PrescriptionResponse
 
 router = APIRouter(prefix="/api/prescription", tags=["Irrigation Prescription"])

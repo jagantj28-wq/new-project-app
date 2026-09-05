@@ -1,4 +1,4 @@
-﻿import re
+import re
 from typing import List, Dict, Any, Optional
 import httpx
 from app.config import get_settings, CROP_PROPERTIES, SOIL_PROPERTIES

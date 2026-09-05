@@ -1,4 +1,4 @@
-﻿from typing import List, Dict, Any
+from typing import List, Dict, Any
 from fastapi import APIRouter
 from app.config import DEMO_FARMS, CROP_PROPERTIES, SOIL_PROPERTIES
 from app.models.schemas import FarmProfile, ZoneResponse

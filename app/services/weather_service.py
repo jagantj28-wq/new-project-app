@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 from typing import Dict, Any, List
 import httpx
 from app.models.schemas import WeatherDaily, WeatherForecastResponse

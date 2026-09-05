@@ -1,4 +1,4 @@
-﻿from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional
 from app.config import SOIL_PROPERTIES, CROP_PROPERTIES
 from app.models.schemas import (
     WeatherForecastResponse,

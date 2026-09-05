@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from app.services.advisor_service import generate_advisor_response, assess_agronomic_risks

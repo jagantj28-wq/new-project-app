@@ -1,4 +1,4 @@
-﻿// FarmTwin AI Agronomist Copilot Controller
+// FarmTwin AI Agronomist Copilot Controller
 
 function openAdvisorDrawer() {
     const drawer = document.getElementById('advisor-drawer');
